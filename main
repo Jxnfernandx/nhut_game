@@ -1,0 +1,61 @@
+# main.asm
+# Main program loop for the Math Match game
+
+    .text
+    .globl main
+
+main:
+    # Initialize the game board
+    jal initialize_board
+
+game_loop:
+    # Draw the grid and cards
+    jal draw_grid
+
+    # Get the first card selection
+    jal get_user_input
+    move $s0, $v0                  # Store first card selection
+    
+    # Reveal first card
+    la $t0, card_states
+    add $t1, $t0, $s0
+    li $t2, 1                      # Set state to revealed (1)
+    sb $t2, 0($t1)
+    
+    # Redraw grid to show first selection
+    jal draw_grid
+    
+    # Get the second card selection
+    jal get_user_input
+    move $s1, $v0                  # Store second card selection
+    
+    # Reveal second card
+    la $t0, card_states
+    add $t1, $t0, $s1
+    li $t2, 1                      # Set state to revealed (1)
+    sb $t2, 0($t1)
+    
+    # Redraw grid to show both selections
+    jal draw_grid
+    
+    # Update game state based on selections
+    jal update_game
+    
+    # Check if all pairs are matched
+    jal check_game_completion
+    beq $v0, 1, game_over          # If game is over, exit loop
+    
+    # Continue loop
+    j game_loop
+
+game_over:
+    # Display game completion message
+    li $v0, 4
+    la $a0, game_complete_msg
+    syscall
+    
+    # Exit program properly
+    li $v0, 10                     # Exit syscall
+    syscall
+
+  

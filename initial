@@ -1,0 +1,32 @@
+# initial.asm
+# Initialize the game board
+
+    .text
+    .globl initialize_board
+
+initialize_board:
+    # Save return address
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    
+    # Initialize all cards to hidden state
+    la $t0, card_states
+    li $t1, 0                      # Counter
+    li $t2, 8                      # Number of cards
+
+init_loop:
+    bge $t1, $t2, end_initialize
+    sb $zero, 0($t0)               # Set state to hidden (0)
+    addi $t0, $t0, 1
+    addi $t1, $t1, 1
+    j init_loop
+
+end_initialize:
+    # Restore return address
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
+
+    .data
+    .globl card_states
+card_states: .byte 0, 0, 0, 0, 0, 0, 0, 0  # Initialize all cards to hidden

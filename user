@@ -1,0 +1,55 @@
+# user.asm
+# Get user input for selecting cards
+
+    .data
+    .globl card_states
+prompt_card_number: .asciiz "\nEnter card number (0-7): "
+invalid_input_msg: .asciiz "Invalid input. Please enter a number between 0 and 7.\n"
+card_matched_msg: .asciiz "That card is already matched. Choose another.\n"
+
+    .text
+    .globl get_user_input
+
+get_user_input:
+    # Save return address
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+
+input_loop:
+    # Prompt for input
+    li $v0, 4
+    la $a0, prompt_card_number
+    syscall
+    
+    # Read integer
+    li $v0, 5
+    syscall
+    move $t0, $v0                  # Store input in t0
+    
+    # Validate input range
+    bltz $t0, invalid_input
+    bgt $t0, 7, invalid_input
+    
+    # Check if card is already matched
+    la $t1, card_states
+    add $t2, $t1, $t0
+    lb $t3, 0($t2)
+    beq $t3, 2, card_matched
+    
+    # Valid input, return it
+    move $v0, $t0
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
+
+invalid_input:
+    li $v0, 4
+    la $a0, invalid_input_msg
+    syscall
+    j input_loop
+
+card_matched:
+    li $v0, 4
+    la $a0, card_matched_msg
+    syscall
+    j input_loop
