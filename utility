@@ -1,0 +1,11 @@
+    .text
+    .globl pause
+
+pause:
+    # Simple pause loop to delay
+    li $t0, 1000000
+
+pause_loop:
+    addi $t0, $t0, -1
+    bnez $t0, pause_loop
+    jr $ra

@@ -1,42 +1,31 @@
-# update.asm
-# Update the game state
-
     .text
     .globl update_game
-    .extern card_values
-    .extern card_states
+    .extern card_states 8
+    .extern card_values 8
 
 update_game:
     # Save return address
     addi $sp, $sp, -4
     sw $ra, 0($sp)
-    
-    # Load card values
+
+    # Load card values and compare
     la $t0, card_values
-    add $t1, $t0, $s0             # First card address
-    lb $t2, 0($t1)                # First card value
-    add $t3, $t0, $s1             # Second card address
-    lb $t4, 0($t3)                # Second card value
-    
-    # Check if cards match (difference of 4)
-    sub $t5, $t4, $t2
-    abs $t5, $t5                  # Absolute difference
-    beq $t5, 4, cards_match
-    
-    # Cards don't match
-    li $t6, 0                     # Set state back to hidden
-    j update_states
+    add $t1, $t0, $s0  # First card address
+    lb $t2, 0($t1)     # First card value
+    add $t3, $t0, $s1  # Second card address
+    lb $t4, 0($t3)     # Second card value
 
-cards_match:
-    li $t6, 2                     # Set state to matched
+    # If the cards match, mark them as matched
+    bne $t2, $t4, no_match
 
-update_states:
+    li $t5, 2  # State to set as matched (2)
     la $t0, card_states
-    add $t1, $t0, $s0             # First card state address
-    sb $t6, 0($t1)                # Update first card
-    add $t1, $t0, $s1             # Second card state address
-    sb $t6, 0($t1)                # Update second card
-    
+    add $t1, $t0, $s0
+    sb $t5, 0($t1)
+    add $t1, $t0, $s1
+    sb $t5, 0($t1)
+
+no_match:
     # Restore return address
     lw $ra, 0($sp)
     addi $sp, $sp, 4

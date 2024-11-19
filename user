@@ -1,43 +1,62 @@
-# user.asm
-# Get user input for selecting cards
-
     .data
-    .globl card_states
-prompt_card_number: .asciiz "\nEnter card number (0-7): "
-invalid_input_msg: .asciiz "Invalid input. Please enter a number between 0 and 7.\n"
-card_matched_msg: .asciiz "That card is already matched. Choose another.\n"
+prompt_row: .asciiz "\nEnter row number (0-3): "
+prompt_col: .asciiz "Enter column number (0-3): "
+invalid_input_msg: .asciiz "Invalid input. Please enter a valid number between 0 and 3.\n"
+card_matched_msg: .asciiz "That card is already matched. Choose another card.\n"
 
     .text
     .globl get_user_input
+    .extern card_states 16
 
 get_user_input:
     # Save return address
     addi $sp, $sp, -4
     sw $ra, 0($sp)
 
-input_loop:
-    # Prompt for input
+input_row:
+    # Prompt for row number
     li $v0, 4
-    la $a0, prompt_card_number
+    la $a0, prompt_row
     syscall
-    
-    # Read integer
+
+    # Read row input
     li $v0, 5
     syscall
-    move $t0, $v0                  # Store input in t0
-    
-    # Validate input range
-    bltz $t0, invalid_input
-    bgt $t0, 7, invalid_input
-    
-    # Check if card is already matched
-    la $t1, card_states
-    add $t2, $t1, $t0
-    lb $t3, 0($t2)
-    beq $t3, 2, card_matched
-    
-    # Valid input, return it
-    move $v0, $t0
+    move $t0, $v0  # Store row input in $t0
+
+    # Validate row input (must be between 0 and 3)
+    blt $t0, 0, invalid_input
+    bgt $t0, 3, invalid_input
+
+input_col:
+    # Prompt for column number
+    li $v0, 4
+    la $a0, prompt_col
+    syscall
+
+    # Read column input
+    li $v0, 5
+    syscall
+    move $t1, $v0  # Store column input in $t1
+
+    # Validate column input (must be between 0 and 3)
+    blt $t1, 0, invalid_input
+    bgt $t1, 3, invalid_input
+
+    # Calculate card index: row * 4 + column
+    mul $t2, $t0, 4
+    add $t2, $t2, $t1  # t2 = row * 4 + column
+
+    # Check if the card is already matched
+    la $t3, card_states
+    add $t4, $t3, $t2
+    lb $t5, 0($t4)
+    beq $t5, 2, card_matched  # If the card is matched, ask the user to choose again
+
+    # Valid input, return the card index
+    move $v0, $t2
+
+    # Restore return address and return
     lw $ra, 0($sp)
     addi $sp, $sp, 4
     jr $ra
@@ -46,10 +65,10 @@ invalid_input:
     li $v0, 4
     la $a0, invalid_input_msg
     syscall
-    j input_loop
+    j input_row  # Start over from the row input
 
 card_matched:
     li $v0, 4
     la $a0, card_matched_msg
     syscall
-    j input_loop
+    j input_row  # Start over from the row input

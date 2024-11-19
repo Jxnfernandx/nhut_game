@@ -1,0 +1,8 @@
+.data
+.globl card_states, card_values
+
+card_states:
+    .space 16       # State of each card (0: hidden, 1: revealed, 2: matched)
+
+card_values:
+    .byte 0, 4, 1, 5, 2, 6, 3, 7, 0, 4, 1, 5, 2, 6, 3, 7  # Values for matching pairs

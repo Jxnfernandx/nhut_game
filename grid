@@ -1,16 +1,13 @@
-# grid.asm
-# Draw a 4x4 grid for the Math Match game
-
-    .data
+.data
 prompt_grid: .asciiz "\nCurrent Grid:\n"
 card_back: .asciiz "[?] "
 new_line: .asciiz "\n"
 index_header: .asciiz "    0   1   2   3\n"
 
-    .text
-    .globl draw_grid
-    .extern card_states 8       # Declare card_states as external (8 bytes in size)
-    .extern card_values 8       # Declare card_values as external (8 bytes in size)
+.text
+.globl draw_grid
+.extern card_states 16
+.extern card_values 16
 
 draw_grid:
     # Save registers
@@ -18,49 +15,49 @@ draw_grid:
     sw $ra, 0($sp)
     sw $s0, 4($sp)
     sw $s1, 8($sp)
-    
+
     # Print grid header
     li $v0, 4
     la $a0, prompt_grid
     syscall
     la $a0, index_header
     syscall
-    
+
     # Initialize row counter
-    li $s0, 0                      # Row index
+    li $s0, 0  # Row index
 
 row_loop:
-    bge $s0, 2, end_draw_grid      # Only two rows (8 cards total)
-    
-    # Print row number
+    bge $s0, 4, end_draw_grid  # Iterate through 4 rows
+
+    # Print row number at the beginning of each row
     li $v0, 1
     move $a0, $s0
     syscall
 
-    # Print space
+    # Print space between row number and cards
     li $v0, 11
     li $a0, ' '
     syscall
 
     # Initialize column counter
-    li $s1, 0                      # Column index
+    li $s1, 0  # Column index
 
 col_loop:
-    bge $s1, 4, next_row           # Only 4 columns per row
-    
-    # Calculate card index
+    bge $s1, 4, next_row  # Iterate through 4 columns
+
+    # Calculate card index: row * 4 + column
     mul $t0, $s0, 4
-    add $t0, $t0, $s1              # t0 = row * 4 + col
-    
-    # Get card state
+    add $t0, $t0, $s1  # t0 = row * 4 + col
+
+    # Get card state from card_states array
     la $t1, card_states
     add $t2, $t1, $t0
-    lb $t3, 0($t2)                 # t3 = card state
-    
+    lb $t3, 0($t2)  # t3 = card state
+
     # If card is hidden, print [?]
     beq $t3, 0, print_hidden
-    
-    # Card is revealed or matched, print value
+
+    # Card is revealed or matched, print its value
     la $t1, card_values
     add $t2, $t1, $t0
     lb $a0, 0($t2)
@@ -69,6 +66,7 @@ col_loop:
     j end_print_card
 
 print_hidden:
+    # Print the hidden card symbol "[?]"
     li $v0, 4
     la $a0, card_back
     syscall
@@ -78,18 +76,18 @@ end_print_card:
     li $v0, 11
     li $a0, ' '
     syscall
-    
-    # Next column
+
+    # Move to next column
     addi $s1, $s1, 1
     j col_loop
 
 next_row:
-    # Print newline
+    # Print a newline at the end of each row
     li $v0, 4
     la $a0, new_line
     syscall
-    
-    # Next row
+
+    # Move to next row
     addi $s0, $s0, 1
     j row_loop
 

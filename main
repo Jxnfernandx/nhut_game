@@ -1,61 +1,78 @@
-# main.asm
-# Main program loop for the Math Match game
-
-    .text
-    .globl main
+.text
+.globl main
+.extern card_states 16
+.extern card_values 16
+.extern initialize_board 0
+.extern draw_grid 0
+.extern get_user_input 0
+.extern update_game 0
+.extern check_game_completion 0
+.extern pause 0
 
 main:
+    # Save $ra before starting the program
+    addi $sp, $sp, -4      # Allocate space on stack
+    sw $ra, 0($sp)         # Save $ra to stack
+
     # Initialize the game board
-    jal initialize_board
+    jal initialize_board   # Jump and link to initialize_board
 
 game_loop:
     # Draw the grid and cards
-    jal draw_grid
+    jal draw_grid          # Jump and link to draw_grid
 
     # Get the first card selection
-    jal get_user_input
-    move $s0, $v0                  # Store first card selection
-    
+    jal get_user_input     # Jump and link to get_user_input
+    move $s0, $v0          # Store first card selection
+
     # Reveal first card
-    la $t0, card_states
+    la $t0, card_states    # Load address of card_states
     add $t1, $t0, $s0
-    li $t2, 1                      # Set state to revealed (1)
+    li $t2, 1              # Set state to revealed (1)
     sb $t2, 0($t1)
-    
+
     # Redraw grid to show first selection
-    jal draw_grid
-    
+    jal draw_grid          # Jump and link to draw_grid
+
     # Get the second card selection
-    jal get_user_input
-    move $s1, $v0                  # Store second card selection
-    
+    jal get_user_input     # Jump and link to get_user_input
+    move $s1, $v0          # Store second card selection
+
     # Reveal second card
-    la $t0, card_states
+    la $t0, card_states    # Load address of card_states
     add $t1, $t0, $s1
-    li $t2, 1                      # Set state to revealed (1)
+    li $t2, 1              # Set state to revealed (1)
     sb $t2, 0($t1)
-    
+
     # Redraw grid to show both selections
-    jal draw_grid
-    
+    jal draw_grid          # Jump and link to draw_grid
+
+    # Pause for a short time before updating game state
+    jal pause              # Jump and link to pause
+
     # Update game state based on selections
-    jal update_game
-    
+    jal update_game        # Jump and link to update_game
+
     # Check if all pairs are matched
-    jal check_game_completion
-    beq $v0, 1, game_over          # If game is over, exit loop
-    
+    jal check_game_completion # Jump and link to check_game_completion
+    beq $v0, 1, game_over  # If game is over, exit loop
+
     # Continue loop
-    j game_loop
+    b game_loop            # Branch to game_loop
 
 game_over:
     # Display game completion message
     li $v0, 4
     la $a0, game_complete_msg
     syscall
-    
+
+    # Restore $ra before exiting
+    lw $ra, 0($sp)         # Restore $ra from stack
+    addi $sp, $sp, 4       # Deallocate stack space
+
     # Exit program properly
-    li $v0, 10                     # Exit syscall
+    li $v0, 10             # Exit syscall
     syscall
 
-  
+.data
+game_complete_msg: .asciiz "\nCongratulations! You've matched all pairs!\n"

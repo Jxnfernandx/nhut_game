@@ -1,38 +1,28 @@
-# check_completion.asm
-# Check if all card pairs have been matched
-
     .text
     .globl check_game_completion
-    .extern card_states 8         # Declare card_states as external (8 bytes in size)
+    .extern card_states 8
 
 check_game_completion:
     # Save return address
     addi $sp, $sp, -4
     sw $ra, 0($sp)
-    
-    # Initialize pointers and counters
-    la $t0, card_states           # Load the base address of card_states
-    li $t1, 0                     # Counter to keep track of cards
-    li $t2, 8                     # Total number of cards
-    li $v0, 1                     # Assume the game is complete initially
+
+    # Check if all cards are matched
+    la $t0, card_states
+    li $t1, 0
+    li $t2, 8
+    li $v0, 1  # Assume game is complete
 
 check_loop:
-    # If counter reaches total cards, end check
     bge $t1, $t2, end_check
-
-    # Load the current card state
-    lb $t3, 0($t0)                # Load the state of the current card
-
-    # If the card is not matched, set $v0 to 0 (game is not complete)
+    lb $t3, 0($t0)
     bne $t3, 2, not_complete
-
-    # Move to the next card
-    addi $t0, $t0, 1              # Move to the next element in card_states
-    addi $t1, $t1, 1              # Increment counter
-    j check_loop                  # Repeat the loop
+    addi $t0, $t0, 1
+    addi $t1, $t1, 1
+    j check_loop
 
 not_complete:
-    li $v0, 0                     # Game is not complete
+    li $v0, 0
 
 end_check:
     # Restore return address
